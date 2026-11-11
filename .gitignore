@@ -14,8 +14,9 @@ yarn-error.log
 
 # Components
 
-src/app/effect/
-src/app/data-type-signals/
+/src/app/effect/*
+/src/app/data-type-signals/*
+/src/app/counter-app-signals/*
 
 
 # IDEs and editors
