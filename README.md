@@ -1,78 +1,22 @@
 # Angular21Tutorial
 
 
+# Angular 21: Working with Signals in Input Fields
 
-# Angular 21: Counter App Using Signals
+Angular Signals provide a reactive way to manage input values without relying on traditional two-way binding with `[(ngModel)]`.
 
-Let's build a simple Counter Application using Angular 21 Signals.
+In Angular 21, you can use the `signal()` function to:
 
-This example covers all the important concepts:
+- Store an input field's value.
+- Get the current input value.
+- Update the input value programmatically.
+- Reset the input field using a button.
+- Maintain proper TypeScript types.
+- React to changes in the input value.
 
-1. Why Angular Signals are useful compared to normal properties.
-2. Creating a writable Signal for counter state.
-3. Understanding `.update()` vs `.set()`.
-4. Implementing increment, decrement, and reset functionality.
-5. Preventing negative counter values.
-6. Binding Signals to the Angular template.
-7. Writing clean and simple counter logic.
+Let's understand each concept with practical examples.
 
-The main focus is Angular logic and Signals, not CSS.
-
-## 1. Why Angular recommends Signals over normal properties
-
-In traditional Angular development, we commonly use normal properties:
-
-typescript
-
-```typescript
-count: number = 0;
-```
-
-To increment:
-
-typescript
-
-```typescript
-this.count++;
-```
-
-This works, but Signals provide a reactive way to manage state.
-
-With Signals:
-
-typescript
-
-```typescript
-count = signal<number>(0);
-```
-
-To increment:
-
-typescript
-
-```typescript
-this.count.update(value => value + 1);
-```
-
-### Difference between normal properties and Signals
-
-| Normal property | Signal |
-| --- | --- |
-| `count = 0` | `count = signal(0)` |
-| `count++` | `count.update(v => v + 1)` |
-| Read using `count` | Read using `count()` |
-| Not inherently reactive | Reactive state management |
-| Angular change detection handles updates | Angular tracks Signal dependencies |
-
-Why use Signals?
-
-- Fine-grained reactive tracking.
-- Easier state management.
-- Automatic template updates when tracked Signal values change.
-- Less need for manual change detection in many scenarios.
-- Useful for modern Angular applications.
-
-## 2. Creating a writable Signal for counter state
+## 1. How to create a signal for an input field
 
 First, import `signal` from `@angular/core`.
 
@@ -86,66 +30,123 @@ import { Component, signal } from '@angular/core';
 @Component({
   selector: 'app-root',
   standalone: true,
-  templateUrl: './app.html',
-  styleUrl: './app.css'
+  templateUrl: './app.html'
 })
 export class AppComponent {
 
-  count = signal<number>(0);
+  name = signal<string>('');
 
 }
 ```
 
-Explanation:
+Here:
 
-typescript
+- `signal()` creates a reactive value.
+- `string` specifies the TypeScript type.
+- `''` is the initial value.
 
-```typescript
-count = signal<number>(0);
+app.html
+
+HTMLWrap linesCopy codePreview
+
+```html
+<input
+  type="text"
+  [value]="name()"
+  (input)="name.set($any($event.target).value)"
+/>
+
+<p>Name: {{ name() }}</p>
 ```
 
-- `count` is the Signal variable.
-- `signal()` creates a writable Signal.
-- `number` defines its TypeScript type.
-- `0` is the initial counter value.
+How it works:
 
-To read the current value:
+- `[value]="name()"` displays the signal's current value.
+- `(input)` listens for changes in the input field.
+- `name.set()` updates the signal.
+- `{{ name() }}` displays the latest value.
 
-typescript
+Important To read a signal, call it using parentheses: `name()`.
 
-```typescript
-this.count()
-```
+## 2. How to get input value using signals
 
-To change the value, use `.set()` or `.update()`.
-
-## 3. Using `.update()` vs `.set()` in Signals
-
-Angular Signals provide two important methods to update values.
-
-### A. `.set()` method
-
-Use `.set()` when you want to assign a completely new value.
-
-Example:
+You can access the current signal value by calling the signal as a function.
 
 typescript
 
 ```typescript
-count = signal<number>(0);
+name = signal<string>('');
 
-setCounter() {
-  this.count.set(10);
+getName() {
+  console.log(this.name());
 }
 ```
 
-Here, the counter value becomes `10`, regardless of its previous value.
+For example, if the user enters `John`, then:
 
-### B. `.update()` method
+typescript
 
-Use `.update()` when the new value depends on the previous value.
+```typescript
+console.log(this.name());
+```
 
-Example:
+Output:
+
+text
+
+```text
+John
+```
+
+You can also use the signal value inside other methods.
+
+typescript
+
+```typescript
+submit() {
+  const inputValue = this.name();
+
+  console.log('Input Value:', inputValue);
+}
+```
+
+## 3. How to set input value using signals
+
+Use the `.set()` method to update the signal value.
+
+typescript
+
+```typescript
+name = signal<string>('');
+
+updateName() {
+  this.name.set('Angular Developer');
+}
+```
+
+When you call `this.name.set()`, Angular updates the signal and refreshes the dependent template.
+
+For example:
+
+HTMLWrap linesCopy codePreview
+
+```html
+<input
+  type="text"
+  [value]="name()"
+  (input)="name.set($any($event.target).value)"
+/>
+
+<button (click)="updateName()">
+  Set Name
+</button>
+
+<p>{{ name() }}</p>
+```
+
+When you click Set Name, the input field displays `Angular Developer`.
+
+You can also use `.update()` when the new value depends on the previous value.
 
 typescript
 
@@ -157,26 +158,9 @@ increment() {
 }
 ```
 
-Here:
+## 4. How to reset input value with a button
 
-- `value` represents the previous counter value.
-- `value + 1` calculates the new value.
-- `.update()` stores the new value in the Signal.
-
-### Difference between `.set()` and `.update()`
-
-| `.set()` | `.update()` |
-| --- | --- |
-| Assigns a new value | Calculates a new value |
-| Does not require previous value | Receives previous value |
-| `count.set(10)` | `count.update(v => v + 1)` |
-| Useful for reset | Useful for increment/decrement |
-
-Interview tip: If an interviewer asks how to increment a Signal, `.update()` is generally the cleaner choice.
-
-## 4. Increment, decrement, and reset logic
-
-Now let's implement the three counter operations.
+To reset an input field, simply set the signal back to its initial value.
 
 app.ts
 
@@ -188,34 +172,160 @@ import { Component, signal } from '@angular/core';
 @Component({
   selector: 'app-root',
   standalone: true,
-  templateUrl: './app.html',
-  styleUrl: './app.css'
+  templateUrl: './app.html'
 })
 export class AppComponent {
 
-  count = signal<number>(0);
+  name = signal<string>('');
 
-  // Increment counter
-  increment() {
-    this.count.update(value => value + 1);
-  }
-
-  // Decrement counter
-  decrement() {
-    this.count.update(value => value - 1);
-  }
-
-  // Reset counter
-  reset() {
-    this.count.set(0);
+  resetName() {
+    this.name.set('');
   }
 
 }
 ```
 
-Let's understand the logic.
+app.html
 
-Increment:
+HTMLWrap linesCopy codePreview
+
+```html
+<h2>Angular Signals Example</h2>
+
+<input
+  type="text"
+  [value]="name()"
+  (input)="name.set($any($event.target).value)"
+  placeholder="Enter your name"
+/>
+
+<button (click)="resetName()">
+  Reset
+</button>
+
+<p>Entered Name: {{ name() }}</p>
+```
+
+Expected behavior:
+
+1. User enters `John`.
+2. The signal stores `John`.
+3. The paragraph displays `John`.
+4. User clicks Reset.
+5. The signal becomes an empty string.
+6. The input field and paragraph both become empty.
+
+Key concept You don't need to manually clear the HTML input. Updating the signal automatically updates the input because it is bound using `[value]="name()"`.
+
+## 5. Common mistakes developers make while using signals
+
+Here are some mistakes to avoid when working with Angular Signals.
+
+### Mistake 1: Forgetting parentheses when reading a signal
+
+Incorrect:
+
+typescript
+
+```typescript
+console.log(this.name);
+```
+
+Correct:
+
+typescript
+
+```typescript
+console.log(this.name());
+```
+
+Why?
+
+A signal is a getter function. Calling it returns its current value.
+
+### Mistake 2: Assigning a value directly to a signal
+
+Incorrect:
+
+typescript
+
+```typescript
+this.name = 'John';
+```
+
+Correct:
+
+typescript
+
+```typescript
+this.name.set('John');
+```
+
+Why?
+
+You must use `.set()` to replace a signal's value.
+
+### Mistake 3: Using `.set()` incorrectly
+
+Incorrect:
+
+typescript
+
+```typescript
+this.name('John');
+```
+
+Correct:
+
+typescript
+
+```typescript
+this.name.set('John');
+```
+
+Why?
+
+Calling a signal without arguments reads its value. Use `.set()` to change it.
+
+### Mistake 4: Forgetting to update the signal when the input changes
+
+Incorrect:
+
+HTMLWrap linesCopy codePreview
+
+```html
+<input type="text" [value]="name()" />
+```
+
+Correct:
+
+HTMLWrap linesCopy codePreview
+
+```html
+<input
+  type="text"
+  [value]="name()"
+  (input)="name.set($any($event.target).value)"
+/>
+```
+
+Why?
+
+The `[value]` binding displays the signal value, but it does not automatically update the signal when the user types.
+
+### Mistake 5: Using `.set()` instead of `.update()` for dependent changes
+
+For example, incrementing a counter.
+
+Incorrect or unnecessarily verbose:
+
+typescript
+
+```typescript
+this.count.set(this.count() + 1);
+```
+
+Better:
 
 typescript
 
@@ -223,160 +333,175 @@ typescript
 this.count.update(value => value + 1);
 ```
 
-If the current value is `5`, the new value becomes `6`.
+Why?
 
-Decrement:
+`.update()` receives the previous value and calculates the next value.
 
-typescript
-
-```typescript
-this.count.update(value => value - 1);
-```
-
-If the current value is `5`, the new value becomes `4`.
-
-Reset:
-
-typescript
-
-```typescript
-this.count.set(0);
-```
-
-Regardless of the current value, the counter becomes `0`.
-
-## 5. Preventing negative counter values
-
-Suppose the counter value is `0`.
-
-If the user clicks the decrement button, we don't want the counter to become `-1`.
-
-There are two ways to handle this.
-
-### Method 1: Conditional logic inside `.update()`
-
-typescript
-
-```typescript
-decrement() {
-  this.count.update(value =>
-    value > 0 ? value - 1 : 0
-  );
-}
-```
-
-Explanation:
-
-- If the value is greater than `0`, decrement it.
-- Otherwise, keep the value at `0`.
-
-This ensures the counter never becomes negative, even if the method is called programmatically.
-
-### Method 2: Disable the decrement button
-
-In your HTML:
-
-HTMLWrap linesCopy codePreview
-
-```html
-<button
-  (click)="decrement()"
-  [disabled]="count() === 0"
->
-  Decrement
-</button>
-```
-
-Explanation:
-
-typescript
-
-```typescript
-[disabled]="count() === 0"
-```
-
-When the counter reaches `0`, the decrement button becomes disabled.
-
-Best practice Use both methods together. The TypeScript condition protects your business logic, while the disabled button improves the user experience.
-
-## 6. Basic template binding with Signals
-
-Now let's connect our TypeScript logic to the HTML template.
-
-app.html
-
-HTMLWrap linesCopy codePreview
-
-```html
-<div class="counter-container">
-
-  <h2>Angular 21 Counter App</h2>
-
-  <h1>{{ count() }}</h1>
-
-  <button (click)="increment()">
-    Increment
-  </button>
-
-  <button
-    (click)="decrement()"
-    [disabled]="count() === 0"
-  >
-    Decrement
-  </button>
-
-  <button (click)="reset()">
-    Reset
-  </button>
-
-</div>
-```
-
-### Important template concepts
-
-| Syntax | Purpose |
-| --- | --- |
-| `{{ count() }}` | Displays the current Signal value |
-| `(click)="increment()"` | Calls increment method |
-| `(click)="decrement()"` | Calls decrement method |
-| `(click)="reset()"` | Calls reset method |
-| `[disabled]="count() === 0"` | Disables decrement at zero |
-
-Remember: Always use parentheses when reading a Signal.
-
-Correct:
-
-HTMLWrap linesCopy codePreview
-
-```html
-{{ count() }}
-```
+### Mistake 6: Modifying objects inside signals directly
 
 Incorrect:
 
-HTMLWrap linesCopy codePreview
+typescript
 
-```html
-{{ count }}
+```typescript
+user = signal({ name: 'John', age: 25 });
+
+this.user().name = 'David';
 ```
 
-## 7. Complete Angular 21 Counter App
+Correct:
 
-Here is the final TypeScript and HTML code together.
+typescript
 
-Live counter preview
+```typescript
+this.user.update(user => ({
+  ...user,
+  name: 'David'
+}));
+```
 
-Interactive
+Why?
 
-Current count
+Signals track updates when their values are set or updated. Mutating an object directly does not notify signal consumers.
 
-# 0
+## 6. Proper typing of signals in Angular
 
-Increment  Decrement  Reset
+Angular Signals support TypeScript generics.
 
-Counter is at its minimum value.
+The syntax is:
 
-This is an interactive preview of the Angular counter logic, not a running Angular application.
+typescript
+
+```typescript
+signal<Type>(initialValue);
+```
+
+Here are common examples.
+
+### String signal
+
+typescript
+
+```typescript
+name = signal<string>('');
+```
+
+Used for input fields containing text.
+
+### Number signal
+
+typescript
+
+```typescript
+age = signal<number>(25);
+```
+
+Used for numbers, counters and calculations.
+
+### Boolean signal
+
+typescript
+
+```typescript
+isLoggedIn = signal<boolean>(false);
+```
+
+Used for true/false values.
+
+### Array signal
+
+typescript
+
+```typescript
+users = signal<string[]>([]);
+```
+
+Used for storing arrays of strings.
+
+Updating an array:
+
+typescript
+
+```typescript
+this.users.update(users => [
+  ...users,
+  'John'
+]);
+```
+
+### Object signal
+
+typescript
+
+```typescript
+user = signal<{
+  name: string;
+  age: number;
+}>({
+  name: 'John',
+  age: 25
+});
+```
+
+Updating an object:
+
+typescript
+
+```typescript
+this.user.set({
+  name: 'David',
+  age: 30
+});
+```
+
+### Signal with null values
+
+Sometimes an input or variable may initially have no value.
+
+typescript
+
+```typescript
+selectedUser = signal<string | null>(null);
+```
+
+Later:
+
+typescript
+
+```typescript
+this.selectedUser.set('John');
+```
+
+The `| null` means the signal can contain either a string or `null`.
+
+### Recommended typing practices
+
+| Requirement | Recommended type |
+| --- | --- |
+| Text input | `signal<string>('')` |
+| Number input | `signal<number>(0)` |
+| Checkbox | `signal<boolean>(false)` |
+| Array | `signal<string[]>([])` |
+| Object | `signal<User>(initialUser)` |
+| Optional value | `signal<string \\| null>(null)` |
+
+You can also let TypeScript infer the type:
+
+typescript
+
+```typescript
+name = signal('');
+age = signal(25);
+isActive = signal(false);
+```
+
+TypeScript automatically infers `string`, `number`, and `boolean`, respectively.
+
+Best practice: Use explicit generic types when working with complex objects, union types, or when you want to make your code easier to understand.
+
+## 7. Complete Angular 21 example
+
+Here is a complete example combining everything we've discussed.
 
 app.ts
 
@@ -388,29 +513,26 @@ import { Component, signal } from '@angular/core';
 @Component({
   selector: 'app-root',
   standalone: true,
-  templateUrl: './app.html',
-  styleUrl: './app.css'
+  templateUrl: './app.html'
 })
 export class AppComponent {
 
-  // Writable Signal
-  count = signal<number>(0);
+  // Create signal
+  name = signal<string>('');
 
-  // Increment
-  increment() {
-    this.count.update(value => value + 1);
+  // Get input value
+  getName() {
+    console.log(this.name());
   }
 
-  // Decrement (prevent negative values)
-  decrement() {
-    this.count.update(value =>
-      value > 0 ? value - 1 : 0
-    );
+  // Set input value
+  setName() {
+    this.name.set('Angular Developer');
   }
 
-  // Reset
-  reset() {
-    this.count.set(0);
+  // Reset input value
+  resetName() {
+    this.name.set('');
   }
 
 }
@@ -421,93 +543,368 @@ app.html
 HTMLWrap linesCopy codePreview
 
 ```html
-<div class="counter-container">
+<h2>Angular 21 Signals</h2>
 
-  <h2>Angular 21 Counter App</h2>
+<input
+  type="text"
+  [value]="name()"
+  (input)="name.set($any($event.target).value)"
+  placeholder="Enter your name"
+/>
 
-  <h1>{{ count() }}</h1>
+<br /><br />
 
-  <button (click)="increment()">
-    Increment
-  </button>
+<button (click)="getName()">
+  Get Value
+</button>
 
-  <button
-    (click)="decrement()"
-    [disabled]="count() === 0"
-  >
-    Decrement
-  </button>
+<button (click)="setName()">
+  Set Value
+</button>
 
-  <button (click)="reset()">
-    Reset
-  </button>
+<button (click)="resetName()">
+  Reset Value
+</button>
 
-</div>
+<h3>Input Value: {{ name() }}</h3>
 ```
 
-You can add your CSS separately in `app.css`.
+## 8. Best practices for Angular 21 developers
 
-## 8. Common mistakes developers make
+A few additional recommendations:
 
-| Mistake | Correct approach |
-| --- | --- |
-| `count++` | `count.update(v => v + 1)` |
-| `count = 10` | `count.set(10)` |
-| `{{ count }}` | `{{ count() }}` |
-| `count.update(v => v - 1)` without checking | Prevent negative values |
-| Forgetting to import `signal` | Import from `@angular/core` |
+1. Avoid `$any()` where possible. Use a properly typed event handler instead.
+   typescript
+   ```typescript
+   onNameInput(event: Event) {
+     const target = event.target;
+   
+     if (target instanceof HTMLInputElement) {
+       this.name.set(target.value);
+     }
+   }
+   ```
+   Template:
+   HTMLWrap linesCopy codePreview
+   ```html
+   <input
+     [value]="name()"
+     (input)="onNameInput($event)"
+   />
+   ```
+2. Use `computed()` for derived values.
+   typescript
+   ```typescript
+   import { signal, computed } from '@angular/core';
+   
+   firstName = signal('John');
+   lastName = signal('David');
+   
+   fullName = computed(() =>
+     this.firstName() + ' ' + this.lastName()
+   );
+   ```
+3. Don't confuse `signal()` and `input()`.
+   - `signal()` creates a writable signal that your component owns.
+   - `input()` creates a signal-based component input that receives a value from its parent. It is read-only inside the receiving component.
+   Example:
+   typescript
+   ```typescript
+   import { Component, input } from '@angular/core';
+   
+   @Component({
+     selector: 'app-user',
+     template: `<p>{{ name() }}</p>`
+   })
+   export class UserComponent {
+     name = input<string>('');
+   }
+   ```
+4. Use `.set()` to replace values and `.update()` to calculate new values.
+5. Avoid directly mutating objects and arrays stored in signals. Prefer immutable updates.
 
-## 9. Angular interview questions based on this counter app
+## 9. Quick revision: Angular Signals methods
 
-These are good questions to prepare:
+| Method | Purpose | Example |
+| --- | --- | --- |
+| `signal()` | Create signal | `name = signal('')` |
+| `()` | Read value | `name()` |
+| `.set()` | Replace value | `name.set('John')` |
+| `.update()` | Update using previous value | `count.update(v => v + 1)` |
+| `computed()` | Derive reactive value | `fullName = computed(...)` |
+| `input()` | Create component input signal | `name = input('')` |
 
-1. Why use Signals instead of normal properties?
-2. What is a writable Signal?
-3. What is the difference between `.set()` and `.update()`?
-4. Why do we use `count()` in the HTML template?
-5. How do Signals update the UI?
-6. How can you prevent a counter from becoming negative?
-7. Can we use `computed()` to determine whether a counter is zero?
-8. What happens if we directly modify a Signal value?
-9. What is the difference between Signals and RxJS Observables?
-10. How do Signals work with Angular's `OnPush` change detection?
+## 10. Official Angular documentation
 
-### Bonus: Can we use `computed()` for counter validation?
+For further learning:
 
-Yes\! For example:
+- [Angular Signals Guide](<https://angular.dev/guide/signals?utm_source=chatgpt.com>)
+- [signal() API Reference](<https://angular.dev/api/core/signal?utm_source=chatgpt.com>)
+- [computed() API Reference](<https://angular.dev/api/core/computed?utm_source=chatgpt.com>)
+- [input() API Reference](<https://angular.dev/api/core/input?utm_source=chatgpt.com>)
+
+My recommendation: First become comfortable with `signal()`, `.set()`, `.update()`, and reading signals using `()`. Then move on to `computed()`, `effect()`, and signal-based component inputs. These are important concepts for becoming proficient with modern Angular development.
+
+
+
+In Angular interviews, especially for Angular 17–21, interviewers can ask questions about Signals in different ways: basic concepts, practical coding, output-based questions, debugging, and real-world scenarios.
+
+Here are commonly asked interview questions based on the input-field Signals topic.
+
+# Angular Signals Interview Questions (Angular 21)
+
+## 1. Basic interview questions
+
+1. What are Signals in Angular?
+2. Why were Signals introduced in Angular?
+3. How do you create a Signal?
+4. What is the difference between `signal()` and a normal variable?
+5. How do you get the value of a Signal?
+6. How do you update a Signal?
+7. What is the difference between `.set()` and `.update()`?
+8. Can a Signal store strings, numbers, arrays, and objects?
+9. What is a writable Signal?
+10. What is the difference between `signal()` and `computed()`?
+
+## 2. Practical coding interview questions
+
+These are particularly important because interviewers often ask you to write code.
+
+Question 1: Create a Signal for an input field.
+
+Expected answer:
 
 typescript
 
 ```typescript
-import { signal, computed } from '@angular/core';
-
-count = signal<number>(0);
-
-isZero = computed(() => this.count() === 0);
+name = signal<string>('');
 ```
 
-Then in HTML:
+Question 2: How do you get the input value using Signals?
+
+typescript
+
+```typescript
+console.log(this.name());
+```
+
+Question 3: How do you set an input value programmatically?
+
+typescript
+
+```typescript
+this.name.set('Angular Developer');
+```
+
+Question 4: How do you reset an input field using a button?
+
+typescript
+
+```typescript
+resetName() {
+  this.name.set('');
+}
+```
+
+Question 5: How do you bind an input field with a Signal?
 
 HTMLWrap linesCopy codePreview
 
 ```html
-<button
-  (click)="decrement()"
-  [disabled]="isZero()"
->
-  Decrement
-</button>
+<input
+  [value]="name()"
+  (input)="name.set($any($event.target).value)"
+/>
 ```
 
-Here, `isZero` automatically recalculates whenever `count` changes.
+Question 6: How do you increment a counter using Signals?
 
-## 10. Important takeaways
+typescript
 
-- `signal()` creates writable reactive state.
-- `count()` reads the current value.
-- `.set()` replaces the value.
-- `.update()` calculates a new value from the previous value.
-- `computed()` derives values from other Signals.
-- Angular tracks Signal dependencies and updates the relevant UI when those values change.
+```typescript
+count = signal<number>(0);
 
-My recommendation: Master this counter application first. It is one of the simplest practical exercises for understanding Angular Signals and is also a common beginner-level interview coding task.
+increment() {
+  this.count.update(value => value + 1);
+}
+```
+
+Question 7: How do you store an object in a Signal?
+
+typescript
+
+```typescript
+user = signal<User>({
+  name: 'John',
+  age: 25
+});
+
+interface User {
+  name: string;
+  age: number;
+}
+```
+
+## 3. Output-based interview questions
+
+Interviewers may give you code and ask what the output will be.
+
+Question 1: What will be the output?
+
+typescript
+
+```typescript
+name = signal<string>('Angular');
+
+console.log(this.name());
+```
+
+Answertext
+
+```text
+Angular
+```
+
+Question 2: What will be the output?
+
+typescript
+
+```typescript
+count = signal<number>(10);
+
+this.count.set(20);
+
+console.log(this.count());
+```
+
+Answertext
+
+```text
+20
+```
+
+Question 3: What will be the output?
+
+typescript
+
+```typescript
+count = signal<number>(5);
+
+this.count.update(value => value + 5);
+
+console.log(this.count());
+```
+
+Answertext
+
+```text
+10
+```
+
+Question 4: What is wrong with this code?
+
+typescript
+
+```typescript
+name = signal<string>('');
+
+this.name = 'John';
+```
+
+AnswerYou cannot assign a string directly to a Signal.
+
+Correct:
+
+typescript
+
+```typescript
+this.name.set('John');
+```
+
+## 4. Scenario-based interview questions
+
+These questions test whether you can use Signals in real applications.
+
+| Interview question | Concept tested |
+| --- | --- |
+| How do you clear an input field after submitting a form? | `set()` |
+| How do you update a counter without reading its value separately? | `update()` |
+| How do you calculate the total price reactively? | `computed()` |
+| How do you share data between parent and child components? | `input()` and `output()` |
+| How do you prevent direct modification of a Signal? | `asReadonly()` |
+| How do you react to changes in a Signal? | `effect()` |
+| How do you update an object stored in a Signal? | Immutable updates |
+| How do you handle an initially empty Signal? | Union types |
+
+## 5. Tricky Angular Signals interview questions
+
+These are useful for experienced Angular developers.
+
+Q1. What is the difference between `signal()` and `computed()`?
+
+- `signal()` creates a writable reactive value.
+- `computed()` creates a read-only derived reactive value.
+
+Q2. Can we modify a Signal directly?
+
+No. Use `.set()` or `.update()`.
+
+Q3. Does changing a Signal update the UI automatically?
+
+Yes. Angular tracks Signal dependencies and updates the relevant template when the value changes.
+
+Q4. What is `asReadonly()`?
+
+It exposes a read-only view of a writable Signal.
+
+typescript
+
+```typescript
+count = signal(10);
+
+readonlyCount = this.count.asReadonly();
+```
+
+Q5. What is the difference between `input()` and `signal()`?
+
+- `signal()` creates a writable Signal.
+- `input()` creates a read-only Signal-based input for receiving data from a parent component.
+
+Q6. What happens if you directly mutate an object inside a Signal?
+
+typescript
+
+```typescript
+user = signal({ name: 'John' });
+
+this.user().name = 'David';
+```
+
+This does not notify Signal consumers of the mutation. Prefer:
+
+typescript
+
+```typescript
+this.user.update(user => ({
+  ...user,
+  name: 'David'
+}));
+```
+
+
+## 6. What I recommend preparing for Angular 21 interviews
+
+Study these topics in this order:
+
+1. Signals: `signal()`, `.set()`, `.update()`.
+2. `computed()` and `effect()`.
+3. `input()` and `output()`.
+4. Signal-based form handling.
+5. Parent-child communication using Signals.
+6. RxJS Observables vs Signals.
+7. Change detection and `OnPush`.
+8. Linked Signals (`linkedSignal()`).
+9. Resource APIs and async reactive data.
+10. Real-world coding problems using Signals.
+
+Interview tip: Don't just memorize definitions. Practice writing small components, explaining why you used `.set()` instead of `.update()`, and describing how Angular reacts when a Signal changes. That is what makes your answers stronger in technical interviews.
