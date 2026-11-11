@@ -1,0 +1,3 @@
+<p>Value: {{name()}}</p>
+<input type="text" [value] = "name()" (input)="setValue($event.target.value)">
+<button (click)="resetValue()">Reset Value</button>
